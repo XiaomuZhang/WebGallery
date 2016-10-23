@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Web相册</title>
+	<link rel="stylesheet" type="text/css" href="animate.css">
+	<script src="zepto.min.js"></script>
+</head>
+<style>
+	blockquote, body, button, dd, dl, dt, fieldset, form, h1, h2, h3, h4, h5, h6, hr, input, legend, li, ol, p, pre, td, textarea, th, ul,img{
+	margin: 0;
+	padding: 0;
+	}
+	ul{list-style:none;}
+	body{background:black;}
+	.img-container li img{}
+	.img-container li{float:left;overflow:hidden;}
+	.large {width:100%;height:100%;position:absolute;top:0px;left:0px;background-color:black;}
+
+</style>
+<body>
+	<ul class="img-container" id="container">
+	</ul>
+	<div class="large animated fadeInDown" id="large_container" style="display:none">
+		<img id="large_img"/>
+	</div>
+	<script>
+		var total = 17;
+		var zWin = $(window);
+		var render = function() {
+			var padding = 2;
+			var winWidth = zWin.width();
+			var picWidth = Math.floor((winWidth-padding*3)/4);
+			var tmpl = '';
+			for (var i= 1; i<=total; i++) {
+				var p = padding;
+				var imgSrc = 'image/'+i+'.jpg';
+				if (i%4 == 1) {
+					p = 0;
+				}
+				tmpl += '<li data-id="'+i+'" class="animated bounceIn" style="width:'+picWidth+'px;height:'+picWidth+'px;padding-left:'+p+'px;padding-top:'+padding+'px"><canvas id="cvs_'+i+'"></canvas></li>';
+				var imageObj = new Image();
+				imageObj.index = i;
+				//调用imageObj的onload事件
+				imageObj.onload = function() {
+					//jquery对象转换成dom对象，然后获取画布上用于绘图的环境
+					var cvs = $('#cvs_'+this.index)[0].getContext('2d');
+					$('#cvs_'+this.index)[0].width = this.width;
+					$('#cvs_'+this.index)[0].height = this.height;
+					cvs.drawImage(this,0,0);
+				}
+				imageObj.src = imgSrc;
+			}
+			$('#container').html(tmpl);
+		}
+		render();
+
+		//加载大图模块
+		var large_img = $('#large_img');
+		var domlarge_img = large_img[0];
+		var loadLargeImg = function(id,callback) {
+			$('#large_container').css({
+				width:zWin.width(),
+				height:zWin.height()
+			}).show();
+
+			var imgSrc = 'image/'+id+'.large.jpg';
+			var imageObj = new Image();
+			imageObj.src = imgSrc;
+			imageObj.onload = function() {
+				var w = this.width;
+				var h = this.height;
+				var winWidth = zWin.width();
+				var winHeight = zWin.height();
+				var paddingLeft = parseInt((winWidth-winHeight*w/h)/2);
+				var paddingTop = parseInt((winHeight-winWidth*h/w)/2);
+				//每次加载大图之前，需重置img标签的属性值
+				large_img.css({
+					'width':'auto',
+					'height':'auto',
+					'padding-left':'0px',
+					'padding-top':'0px'
+				})
+				//如果是长图
+				if (h/w>1.2) {
+					large_img.attr('src',imgSrc).css('height',winHeight).css('padding-left',paddingLeft+'px');
+				}else{
+					//如果是横图
+					large_img.attr('src',imgSrc).css('width',winWidth).css('padding-top',paddingTop+'px');
+				}
+				callback && callback();
+			}
+		}
+
+		//绑定tap事件，点击加载大图
+		var swipeIndex;
+		$('#container').delegate('li','tap',function(){
+			var _id = swipeIndex = $(this).attr('data-id');
+			loadLargeImg(_id);
+		});
+
+		//点击屏幕，关闭大图；左滑；右滑
+		$('#large_container').tap(function() {
+			$(this).hide();
+		}).swipeLeft(function(){
+			swipeIndex++;
+			if  (swipeIndex > total)  {
+				swipeIndex = total;
+			}
+			loadLargeImg(swipeIndex, function() {
+				domlarge_img.addEventListener('webkitAnimationEnd',function() {
+					large_img.removeClass('animated bounceInRight');
+					domlarge_img.removeEventListener('webkitAnimationEnd',null);
+				},false);
+				large_img.addClass('animated bounceInRight');
+			});
+		}).swipeRight(function(){
+			swipeIndex--;
+			if (swipeIndex < 1) {
+				swipeIndex = 1;
+			}
+			loadLargeImg(swipeIndex,function() {
+				domlarge_img.addEventListener('webkitAnimationEnd',function() {
+					large_img.removeClass('animated bounceInLeft');
+					domlarge_img.removeEventListener('webkitAnimationEnd',null);
+				},false);
+				large_img.addClass('animated bounceInLeft');
+			});
+		});
+
+	</script>
+
+</body>
+</html>
