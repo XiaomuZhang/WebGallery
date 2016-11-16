@@ -1,4 +1,4 @@
 # WebAPP相册
 这是一个模仿手机app效果的web端相册
-手机演示地址https://xiaomuzhang.github.io/WebGallery/webGallery.html
+手机演示地址[examplelink](https://xiaomuzhang.github.io/WebGallery/webGallery.html)
 手机chrome浏览器可兼容
